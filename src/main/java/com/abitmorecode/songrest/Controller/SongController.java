@@ -24,18 +24,38 @@ public class SongController {
 	private SongsManager songService;
 
 	@GetMapping("/songs/{id}")
-	public ResponseEntity<Object> getSong(@PathVariable int id) {
-		try {
-			return new ResponseEntity<>(songService.getSpecificSong(id), HttpStatus.OK);
-		} catch (SongDoesntExistException e) {
-			log.error(e.getMessage());
-			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+	public ResponseEntity<Object> getSong(@PathVariable int id, @RequestHeader(HttpHeaders.ACCEPT) String acceptHeader) throws SongDoesntExistException {
+		//TODO: log Exception if song doesn't exist?
+		switch(acceptHeader){
+			case "application/json":
+				return new ResponseEntity<>(songService.getSpecificSong(id), HttpStatus.OK);
+
+			case "application/xml":
+				//TODO: return song as xml
+				return null;
+
+			default:
+				String logInfo = "unknown accept header (=\""+acceptHeader+"\") on GET song by id request";
+				log.info(logInfo);
+				return new ResponseEntity<>(logInfo,HttpStatus.BAD_REQUEST);
 		}
 	}
 
 	@GetMapping("/songs")
-	public ResponseEntity<List<Song>> getSongs() {
-		return new ResponseEntity<>(songService.getAllSongs(), HttpStatus.OK);
+	public ResponseEntity<Object> getSongs(@RequestHeader(HttpHeaders.ACCEPT) String acceptHeader) {
+		switch(acceptHeader){
+			case "application/json":
+				return new ResponseEntity<>(songService.getAllSongs(), HttpStatus.OK);
+
+			case "application/xml":
+				//TODO: return songs as xml
+				return null;
+
+			default:
+				String logInfo = "unknown accept header (=\""+acceptHeader+"\") on GET songs request";
+				log.info(logInfo);
+				return new ResponseEntity<>(logInfo,HttpStatus.BAD_REQUEST);
+		}
 	}
 
 	@PostMapping("/songs")
