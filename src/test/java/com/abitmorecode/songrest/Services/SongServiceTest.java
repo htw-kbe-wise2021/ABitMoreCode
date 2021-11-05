@@ -2,111 +2,84 @@ package com.abitmorecode.songrest.Services;
 
 import com.abitmorecode.songrest.Models.Song;
 import com.abitmorecode.songrest.SongControllerException.NoIdAvailableException;
-import com.abitmorecode.songrest.SongControllerException.SameSongAlreadyExistException;
-import com.abitmorecode.songrest.SongControllerException.SongIdAlreadyExistException;
-import com.google.gson.JsonParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.NoSuchFileException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 class SongServiceTest {
 
-	@SuppressWarnings("FieldCanBeLocal")
-	private final String path = "src/test/java/com/abitmorecode/songrest/test_json/";
+	@Autowired
+	private SongService songService;
 
-	private String correctpath;
-	private String wrongpath;
-	private String weirdpath;
-	private String nonepath;
+	private String correctfile;
+	private String wrongfile;
+	private String weirdfile;
+	private String nonefile;
 
 	@BeforeEach
 	void setup() {
-		correctpath = path + "correct_songs.json";
-		wrongpath = path + "incorrect.json";
-		weirdpath = path + "incorrect_songs.json";
-		nonepath = path + "somepath";
+		songService.reset();
+		correctfile = "correct_songs.json";
+		wrongfile = "incorrect.json";
+		weirdfile = "incorrect_songs.json";
+		nonefile = "somepath";
 	}
 
 	@Test
 	void testFilesExist() {
-		assertNotNull(correctpath);
-		assertNotNull(wrongpath);
-		assertNotNull(weirdpath);
-		assertNotNull(nonepath);
-		assert(new File(correctpath).exists());
-		assert(new File(wrongpath).exists());
-		assert(new File(weirdpath).exists());
-		assert(!new File(nonepath).exists());
+		assertNotNull(correctfile);
+		assertNotNull(wrongfile);
+		assertNotNull(weirdfile);
+		assertNotNull(nonefile);
+		assert(new File(Objects.requireNonNull(getClass().getClassLoader().getResource(correctfile)).getPath()).exists());
+		assert(new File(Objects.requireNonNull(getClass().getClassLoader().getResource(wrongfile)).getPath()).exists());
+		assert(new File(Objects.requireNonNull(getClass().getClassLoader().getResource(weirdfile)).getPath()).exists());
+		assertThrows(NullPointerException.class, () -> new File(Objects.requireNonNull(getClass().getClassLoader().getResource(nonefile)).getPath()));
 	}
 
 	@Test
 	void basicInitializeTest() {
-		SongService songService = null;
-		try {
-			songService = new SongService();
-			songService.reset();
-			songService.init(correctpath);
-		} catch (IOException e) {
-			fail();
-		}
-
+		songService.init(correctfile);
 		List<Song> songs = songService.getAllSongs();
-
 		assertEquals(new Song(1, "Das Test", "N bisschen Test", "TestTestTest", 2015), songs.stream().findFirst().get());
 	}
 
 	@Test
 	void pathNotFoundTest() {
-		final SongService songService = new SongService();
-		assertThrows(NoSuchFileException.class, () -> songService.init(nonepath));
+		songService.init(nonefile);
+		System.out.println(Arrays.toString(songService.getAllSongs().toArray()));
+		assert songService.getAllSongs().isEmpty();
 	}
 
 	@Test
 	void fileHasNoJsonInItTest() {
-		final SongService songService = new SongService();
-		assertThrows(JsonParseException.class, () -> songService.init(wrongpath));
+		songService.init(wrongfile);
+		System.out.println(Arrays.toString(songService.getAllSongs().toArray()));
+		assert songService.getAllSongs().isEmpty();
 	}
 
 	@Test
 	void fileHasWrongJsonInItTest() {
-		SongService songService = new SongService();
-		songService.reset();
-		try {
-			songService.init(weirdpath);
-		} catch (IOException e) {
-			fail();
-		}
+		songService.init(weirdfile);
 		assert songService.getAllSongs().isEmpty();
 	}
 
 	@Test
 	void addASimpleSong() {
-		SongsManager songService = new SongService();
-		songService.reset();
 		try {
 			songService.addSong(new Song(1, "Das Test", "N bisschen Test", "TestTestTest", 2015));
 		} catch (NoIdAvailableException e) {
 			fail();
 		}
 		assertEquals(new Song(1, "Das Test", "N bisschen Test", "TestTestTest", 2015), songService.getAllSongs().stream().findFirst().get());
-	}
-
-	@Test
-	void addASongWithAutomaticIdAssigment() {
-		SongsManager songService = new SongService();
-		songService.reset();
-	}
-
-	@Test
-	void addIdWhereNoIdWasBeforeTest() {
-		List<String> list = new ArrayList<>();
-		assertThrows(IndexOutOfBoundsException.class, () -> list.add(1, "string"));
 	}
 }
