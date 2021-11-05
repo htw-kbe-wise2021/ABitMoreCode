@@ -28,43 +28,44 @@ public class SongController {
 
 	@GetMapping("/songs/{id}")
 	public ResponseEntity<Object> getSong(@PathVariable int id, @RequestHeader(HttpHeaders.ACCEPT) String acceptHeader) throws SongDoesntExistException {
-		//TODO: log Exception if song doesn't exist?
-		switch(acceptHeader){
-			case "application/json":
-				return new ResponseEntity<>(songService.getSpecificSong(id), HttpStatus.OK);
-
-			case "application/xml":
-				try {
-					return new ResponseEntity<>(xml.writeValueAsBytes(songService.getSpecificSong(id)), HttpStatus.OK);
-				} catch (JsonProcessingException e) {
-					log.error(e.getMessage());
-				}
-
-			default:
-				String logInfo = "unknown accept header (=\""+acceptHeader+"\") on GET song by id request";
-				log.info(logInfo);
-				return new ResponseEntity<>(logInfo,HttpStatus.BAD_REQUEST);
+		if(!isAcceptHeaderValid(acceptHeader)){
+			String logInfo = "unknown accept header (=\""+acceptHeader+"\") on GET song by id request";
+			log.info(logInfo);
+			return new ResponseEntity<>(logInfo,HttpStatus.BAD_REQUEST);
 		}
+
+		Object song = songService.getSpecificSong(id);
+
+		if(acceptHeader == "application/xml"){
+			try {
+				song = xml.writeValueAsBytes(song);
+			} catch (JsonProcessingException e) {
+				log.error(e.getMessage());
+			}
+		}
+
+		return new ResponseEntity<>(song, HttpStatus.OK);
 	}
 
 	@GetMapping("/songs")
 	public ResponseEntity<Object> getSongs(@RequestHeader(HttpHeaders.ACCEPT) String acceptHeader) {
-		switch(acceptHeader){
-			case "application/json":
-				return new ResponseEntity<>(songService.getAllSongs(), HttpStatus.OK);
-
-			case "application/xml":
-				try {
-					return new ResponseEntity<>(xml.writeValueAsBytes(songService.getAllSongs()), HttpStatus.OK);
-				} catch (JsonProcessingException e) {
-					log.error(e.getMessage());
-				}
-
-			default:
-				String logInfo = "unknown accept header (=\""+acceptHeader+"\") on GET songs request";
-				log.info(logInfo);
-				return new ResponseEntity<>(logInfo,HttpStatus.BAD_REQUEST);
+		if(!isAcceptHeaderValid(acceptHeader)){
+			String logInfo = "unknown accept header (=\""+acceptHeader+"\") on GET songs request";
+			log.info(logInfo);
+			return new ResponseEntity<>(logInfo,HttpStatus.BAD_REQUEST);
 		}
+
+		Object songs = songService.getAllSongs();
+
+		if(acceptHeader == "application/xml"){
+			try {
+				songs = xml.writeValueAsBytes(songs);
+			} catch (JsonProcessingException e) {
+				log.error(e.getMessage());
+			}
+		}
+
+		return new ResponseEntity<>(songs, HttpStatus.OK);
 	}
 
 	@PostMapping("/songs")
@@ -87,5 +88,9 @@ public class SongController {
 			log.error(e.getMessage());
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
+	}
+
+	private boolean isAcceptHeaderValid(String acceptHeader){
+		return acceptHeader == "application/json" || acceptHeader == "application/xml";
 	}
 }
