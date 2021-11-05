@@ -32,9 +32,7 @@ public class SongService implements SongsManager {
 	private static final Logger log = LoggerFactory.getLogger(SongService.class);
 	private final List<Song> songs = new ArrayList<>();
 
-	private static final List<Song> songs = new ArrayList<>();
-
-	private static final Gson gson = new Gson();
+	private final SongInitService initializer;
 
 	/**
 	 * default constructor
