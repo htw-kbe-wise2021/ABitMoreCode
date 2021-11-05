@@ -1,8 +1,6 @@
 package com.abitmorecode.songrest.Services;
 
-import com.abitmorecode.songrest.Controller.SongController;
 import com.abitmorecode.songrest.Models.Song;
-import com.fasterxml.jackson.core.JsonParseException;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.slf4j.Logger;
