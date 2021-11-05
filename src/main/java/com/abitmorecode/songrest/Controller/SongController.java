@@ -4,6 +4,8 @@ import com.abitmorecode.songrest.Models.Song;
 import com.abitmorecode.songrest.Services.SongsManager;
 import com.abitmorecode.songrest.SongControllerException.NoIdAvailableException;
 import com.abitmorecode.songrest.SongControllerException.SongDoesntExistException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import java.util.List;
 @RequestMapping("/ABitMoreCode")
 public class SongController {
 	private static final Logger log = LoggerFactory.getLogger(SongController.class);
+	private static final XmlMapper xml = new XmlMapper();
 
 	@Autowired
 	private SongsManager songService;
@@ -31,8 +34,11 @@ public class SongController {
 				return new ResponseEntity<>(songService.getSpecificSong(id), HttpStatus.OK);
 
 			case "application/xml":
-				//TODO: return song as xml
-				return null;
+				try {
+					return new ResponseEntity<>(xml.writeValueAsBytes(songService.getSpecificSong(id)), HttpStatus.OK);
+				} catch (JsonProcessingException e) {
+					log.error(e.getMessage());
+				}
 
 			default:
 				String logInfo = "unknown accept header (=\""+acceptHeader+"\") on GET song by id request";
@@ -48,8 +54,11 @@ public class SongController {
 				return new ResponseEntity<>(songService.getAllSongs(), HttpStatus.OK);
 
 			case "application/xml":
-				//TODO: return songs as xml
-				return null;
+				try {
+					return new ResponseEntity<>(xml.writeValueAsBytes(songService.getAllSongs()), HttpStatus.OK);
+				} catch (JsonProcessingException e) {
+					log.error(e.getMessage());
+				}
 
 			default:
 				String logInfo = "unknown accept header (=\""+acceptHeader+"\") on GET songs request";
