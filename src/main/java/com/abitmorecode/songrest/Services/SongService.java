@@ -37,52 +37,37 @@ public class SongService implements SongsManager {
 	/**
 	 * default constructor
 	 */
-	public SongService() {
-		String filepath = "exercises/1/songs.json";
+	@Autowired
+	public SongService(SongInitService initializer) {
+		this.initializer = initializer;
+		init();
+	}
+
+
+	private void init() {
+		URL resource = getClass().getClassLoader().getResource("songs.json");
 		try {
-			init(filepath);
+			songs.addAll(initializer.init(Objects.requireNonNull(resource).getPath()));
 		} catch (IOException e) {
 			log.error(Arrays.toString(e.getStackTrace()));
+		} catch (NullPointerException ex) {
+			log.error("set path is null! couldn't finish initialisation!");
+		} catch (ParseException e) {
+			log.error("couldn't parse Json from given file! couldn't finish initialisation!");
 		}
 	}
 
-	/**
-	 * init a json via a file (filepath)
-	 * <p>
-	 * on corrupted/malformed json, it will either ignore it/throw an error it if the file still
-	 * <p>
-	 * inherits basic structure, or throws a RuntimeException
-	 *
-	 * @param filepath file path to json file
-	 *
-	 * @throws IOException thrown, if file doesn't exist or file can't be read
-	 */
-	public void init(String filepath) throws IOException {
-		// load in string
-		Stream<String> linesStream = Files.lines(Path.of(filepath));
-		AtomicReference<String> allLines = new AtomicReference<>("");
-		Arrays.stream(linesStream.toArray()).forEach((line) -> allLines.updateAndGet(v -> v + line));
-
-		// remove all the spaces
-		String lines = allLines.get().replaceAll("\\s+(?=([^\"]*\"[^\"]*\")*[^\"]*$)", "");
-
-		// format Json into Array of Songs
-		Song[] loadedIn;
-		// init empty array, if no object/s was/were found / loaded in
-		if ((loadedIn = gson.fromJson(lines, Song[].class)) == null) {
-			log.warn("no jsons found to load in from file: " + filepath + ", no songs where found");
-			loadedIn = new Song[]{};
+	void init(String file) {
+		URL resource = getClass().getClassLoader().getResource(file);
+		try {
+			songs.addAll(initializer.init(Objects.requireNonNull(resource).getPath()));
+		} catch (IOException e) {
+			log.error(Arrays.toString(e.getStackTrace()));
+		} catch (NullPointerException ex) {
+			log.error("given path is null! couldn't finish initialisation!");
+		} catch (ParseException e) {
+			log.error("couldn't parse Json from given file! couldn't finish initialisation!");
 		}
-
-		// remove any Song with null in parameters
-		List<Song> nullList = Arrays.stream(loadedIn).filter(Song::anyNull).collect(Collectors.toList());
-		List<Song> clonedList = Arrays.stream(loadedIn).collect(Collectors.toList());
-		nullList.forEach(s -> log.warn(s.toString() + " was not added due to at least one 'null' parameter"));
-		clonedList.removeAll(nullList);
-
-		// set the cleaned List as the officially running Song List
-		songs.addAll(clonedList.stream().sorted(Comparator.comparingInt(Song::getId)).collect(Collectors.toList()));
-		log.info(clonedList.size() + " Songs initialized");
 	}
 
 	@Override
