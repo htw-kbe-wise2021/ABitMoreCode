@@ -29,7 +29,8 @@ import java.util.stream.Stream;
 @Service
 public class SongService implements SongsManager {
 
-	private static final Logger log = LoggerFactory.getLogger(SongController.class);
+	private static final Logger log = LoggerFactory.getLogger(SongService.class);
+	private final List<Song> songs = new ArrayList<>();
 
 	private static final List<Song> songs = new ArrayList<>();
 
